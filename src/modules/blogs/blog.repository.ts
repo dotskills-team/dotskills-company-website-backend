@@ -1,14 +1,12 @@
-import { FilterQuery, UpdateQuery } from 'mongoose';
-import { BlogPost, IBlogPost } from './blogPost.model';
-import { BlogPostInput } from './blog.types';
-import { PaginationResult } from '../../utils/pagination';
+import type { UpdateQuery } from 'mongoose';
+import { BlogPost } from './blogPost.model';
+import type { IBlogPost } from './blogPost.model';
+import type { BlogPostInput } from './blog.types';
+import type { PaginationResult } from '../../utils/pagination';
 
-// ✅ Helper: Mongo document → clean object with `id`
-const toPlain = (doc: IBlogPost & { _id: unknown }) => ({
-  ...doc,
-  id: String(doc._id),
-  _id: undefined,   // optionally hide
-});
+type BlogPostLean = IBlogPost & {
+  _id: unknown;
+};
 
 export class BlogRepository {
   async create(payload: BlogPostInput): Promise<IBlogPost> {
@@ -16,19 +14,43 @@ export class BlogRepository {
   }
 
   async findById(id: string): Promise<IBlogPost | null> {
-    const doc = await BlogPost.findById(id).lean<IBlogPost>();
-    if (!doc) return null;
-    return { ...doc, id: String(doc._id) } as unknown as IBlogPost;
+    const doc = await BlogPost.findById(id).lean<BlogPostLean>();
+
+    if (!doc) {
+      return null;
+    }
+
+    return {
+      ...doc,
+      id: String(doc._id),
+    } as IBlogPost;
   }
 
   async findBySlug(slug: string): Promise<IBlogPost | null> {
-    const doc = await BlogPost.findOne({ slug }).lean<IBlogPost>();
-    if (!doc) return null;
-    return { ...doc, id: String(doc._id) } as unknown as IBlogPost;
+    const doc = await BlogPost.findOne({ slug }).lean<BlogPostLean>();
+
+    if (!doc) {
+      return null;
+    }
+
+    return {
+      ...doc,
+      id: String(doc._id),
+    } as IBlogPost;
   }
 
-  async updateById(id: string, payload: UpdateQuery<IBlogPost>): Promise<IBlogPost | null> {
-    return BlogPost.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+  async updateById(
+    id: string,
+    payload: UpdateQuery<IBlogPost>
+  ): Promise<IBlogPost | null> {
+    return BlogPost.findByIdAndUpdate(
+      id,
+      payload,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
   }
 
   async deleteById(id: string): Promise<IBlogPost | null> {
@@ -36,19 +58,29 @@ export class BlogRepository {
   }
 
   async paginate(
-    filter: FilterQuery<IBlogPost>,
+    filter: Record<string, unknown>,
     { page, limit, skip, sort }: PaginationResult
-  ) {
+  ): Promise<{
+    docs: IBlogPost[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const [docs, total] = await Promise.all([
-      BlogPost.find(filter).sort(sort).skip(skip).limit(limit).lean<IBlogPost[]>(),
+      BlogPost.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean<BlogPostLean[]>(),
+
       BlogPost.countDocuments(filter),
     ]);
 
-    // ✅ প্রতিটা doc এ `id` field যোগ করুন
     const withIds = docs.map((doc) => ({
       ...doc,
       id: String(doc._id),
-    }));
+    })) as IBlogPost[];
 
     return {
       docs: withIds,
@@ -59,7 +91,10 @@ export class BlogRepository {
     };
   }
 
-  async slugExists(slug: string, excludeId?: string): Promise<boolean> {
+  async slugExists(
+    slug: string,
+    excludeId?: string
+  ): Promise<boolean> {
     return BlogPost.isSlugTaken(slug, excludeId);
   }
 }

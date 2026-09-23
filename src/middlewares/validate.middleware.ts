@@ -1,22 +1,32 @@
 import type { Request, Response, NextFunction } from 'express';
-import { type AnyZodObject, ZodError } from 'zod';
+import { type ZodType, ZodError } from 'zod';
 import { ApiError } from '../utils/ApiError';
 
+type ParsedRequest = {
+  body?: unknown;
+  query?: Record<string, unknown> | null;
+  params?: Record<string, string> | null;
+};
+
 export const validate =
-  (schema: AnyZodObject) =>
+  (schema: ZodType) =>
   (req: Request, _res: Response, next: NextFunction): void => {
     try {
       const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
-      });
+      }) as ParsedRequest;
 
-      if (parsed.body) req.body = parsed.body;
-      if (parsed.params) req.params = parsed.params;
+      if (parsed.body !== undefined) {
+        req.body = parsed.body;
+      }
 
-      // Express 5 এ req.query immutable
-      if (parsed.query) {
+      if (parsed.params !== undefined && parsed.params !== null) {
+        req.params = parsed.params;
+      }
+
+      if (parsed.query !== undefined && parsed.query !== null) {
         Object.defineProperty(req, 'query', {
           value: parsed.query,
           writable: true,
@@ -28,15 +38,15 @@ export const validate =
       next();
     } catch (err) {
       if (err instanceof ZodError) {
-        // ✅ Zod 4.x এ issues ব্যবহার করুন
-        const issues = err.issues ?? [];
-        const errors = issues.map((e) => ({
+        const errors = err.issues.map((e) => ({
           path: e.path.join('.'),
           message: e.message,
         }));
+
         next(ApiError.badRequest('Validation failed', errors));
         return;
       }
+
       next(err);
     }
   };

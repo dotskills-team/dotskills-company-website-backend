@@ -1,7 +1,11 @@
-import { Schema, model, type Document, type Model, type FilterQuery } from 'mongoose';
+import {
+  Schema,
+  model,
+  type Model,
+} from 'mongoose';
 import type { Author } from './blog.types';
 
-export interface IBlogPost extends Document {
+export interface IBlogPost {
   slug: string;
   title: string;
   excerpt: string;
@@ -75,7 +79,8 @@ blogPostSchema.statics.isSlugTaken = async function (
   slug: string,
   excludeId?: string
 ): Promise<boolean> {
-  const query: FilterQuery<IBlogPost> = { slug };
+  // const query: FilterQuery<IBlogPost> = { slug };
+  const query: Record<string, unknown> = { slug };
   if (excludeId) query['_id'] = { $ne: excludeId };
   const count = await this.countDocuments(query);
   return count > 0;
