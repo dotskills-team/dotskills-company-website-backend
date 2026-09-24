@@ -24,7 +24,8 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "ignoreDeprecations": "6.0",
-    "rootDir": "./src",
+    // "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
@@ -36,6 +37,7 @@
     "exactOptionalPropertyTypes": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts"],
+  // "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "api/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

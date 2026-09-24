@@ -37,7 +37,6 @@ app.get("/api/v1/health", (_req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/services", serviceRoutes);
-app.use('/api/v1/posts', blogRoute);     // ← এই লাইনটা যোগ করুন
-
+app.use('/api/v1/posts', blogRoute);     
 
 export default app;
