@@ -5,7 +5,7 @@ import cors from "cors";
 import authRoutes from "./modules/auth/auth.routes.js";
 import serviceRoutes from "./modules/services/services.routes.js";
 import blogRoute from "./modules/blogs/blog.route.js";
-
+import mediaRoutes from "./modules/media/media.routes.js";
 
 const app = express();
 
@@ -37,6 +37,6 @@ app.get("/api/v1/health", (_req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/services", serviceRoutes);
-app.use('/api/v1/posts', blogRoute);     
-
+app.use('/api/v1/posts', blogRoute);   
+app.use("/api/v1/media", mediaRoutes);
 export default app;

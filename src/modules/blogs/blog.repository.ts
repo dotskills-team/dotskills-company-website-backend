@@ -1,20 +1,42 @@
-import type { UpdateQuery } from 'mongoose';
-import { BlogPost } from './blogPost.model';
-import type { IBlogPost } from './blogPost.model';
-import type { BlogPostInput } from './blog.types';
-import type { PaginationResult } from '../../utils/pagination';
+import type {
+  UpdateQuery,
+} from 'mongoose';
 
-type BlogPostLean = IBlogPost & {
-  _id: unknown;
-};
+import { BlogPost } from './blogPost.model';
+
+import type {
+  IBlogPost,
+} from './blogPost.model';
+
+import type {
+  BlogPostInput,
+} from './blog.types';
+
+import type {
+  PaginationResult,
+} from '../../utils/pagination';
+
+type BlogPostLean =
+  IBlogPost & {
+    _id: unknown;
+  };
 
 export class BlogRepository {
-  async create(payload: BlogPostInput): Promise<IBlogPost> {
-    return BlogPost.create(payload);
+  async create(
+    payload: BlogPostInput
+  ): Promise<IBlogPost> {
+    return BlogPost.create(
+      payload
+    );
   }
 
-  async findById(id: string): Promise<IBlogPost | null> {
-    const doc = await BlogPost.findById(id).lean<BlogPostLean>();
+  async findById(
+    id: string
+  ): Promise<IBlogPost | null> {
+    const doc =
+      await BlogPost
+        .findById(id)
+        .lean<BlogPostLean>();
 
     if (!doc) {
       return null;
@@ -26,8 +48,13 @@ export class BlogRepository {
     } as IBlogPost;
   }
 
-  async findBySlug(slug: string): Promise<IBlogPost | null> {
-    const doc = await BlogPost.findOne({ slug }).lean<BlogPostLean>();
+  async findBySlug(
+    slug: string
+  ): Promise<IBlogPost | null> {
+    const doc =
+      await BlogPost
+        .findOne({ slug })
+        .lean<BlogPostLean>();
 
     if (!doc) {
       return null;
@@ -53,13 +80,22 @@ export class BlogRepository {
     );
   }
 
-  async deleteById(id: string): Promise<IBlogPost | null> {
-    return BlogPost.findByIdAndDelete(id);
+  async deleteById(
+    id: string
+  ): Promise<IBlogPost | null> {
+    return BlogPost.findByIdAndDelete(
+      id
+    );
   }
 
   async paginate(
     filter: Record<string, unknown>,
-    { page, limit, skip, sort }: PaginationResult
+    {
+      page,
+      limit,
+      skip,
+      sort,
+    }: PaginationResult
   ): Promise<{
     docs: IBlogPost[];
     total: number;
@@ -67,27 +103,34 @@ export class BlogRepository {
     limit: number;
     totalPages: number;
   }> {
-    const [docs, total] = await Promise.all([
+    const [
+      docs,
+      total,
+    ] = await Promise.all([
       BlogPost.find(filter)
         .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean<BlogPostLean[]>(),
 
-      BlogPost.countDocuments(filter),
+      BlogPost.countDocuments(
+        filter
+      ),
     ]);
 
-    const withIds = docs.map((doc) => ({
-      ...doc,
-      id: String(doc._id),
-    })) as IBlogPost[];
+    const withIds =
+      docs.map((doc) => ({
+        ...doc,
+        id: String(doc._id),
+      })) as IBlogPost[];
 
     return {
       docs: withIds,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages:
+        Math.ceil(total / limit),
     };
   }
 
@@ -95,8 +138,12 @@ export class BlogRepository {
     slug: string,
     excludeId?: string
   ): Promise<boolean> {
-    return BlogPost.isSlugTaken(slug, excludeId);
+    return BlogPost.isSlugTaken(
+      slug,
+      excludeId
+    );
   }
 }
 
-export const blogRepository = new BlogRepository();
+export const blogRepository =
+  new BlogRepository();
