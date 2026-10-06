@@ -1,75 +1,60 @@
 import { Router } from 'express';
 
-import { blogController } from './blog.controller';
-
+import { requireAdmin } from '../../middlewares/admin.middleware';
+import { optionalAuth, requireAuth } from '../../middlewares/auth.middleware';
+import { writeLimiter } from '../../middlewares/rateLimiter.middleware';
 import { validate } from '../../middlewares/validate.middleware';
 
+import { blogController } from './blog.controller';
 import {
   createBlogPostSchema,
-  updateBlogPostSchema,
-  getBlogPostSchema,
-  getBlogPostBySlugSchema,
-  listBlogPostsSchema,
   deleteBlogPostSchema,
-} from './blog.validation.js';
-
-import {
-  writeLimiter,
-} from '../../middlewares/rateLimiter.middleware';
-
-import {
-  requireAuth,
-} from '../../middlewares/auth.middleware';
+  getBlogPostBySlugSchema,
+  getBlogPostSchema,
+  listBlogPostsSchema,
+  updateBlogPostSchema,
+} from './blog.validation';
 
 const router = Router();
 
-/**
- * Public routes
- */
+/** Public routes */
+router.get('/', optionalAuth, validate(listBlogPostsSchema), blogController.list);
 
-router.get(
-  '/',
-  validate(listBlogPostsSchema),
-  blogController.list
-);
-
+// must stay BEFORE '/:id'
 router.get(
   '/slug/:slug',
   validate(getBlogPostBySlugSchema),
   blogController.getBySlug
 );
 
-/**
- * Protected routes
- */
+router.get('/:id', optionalAuth, validate(getBlogPostSchema), blogController.getById);
 
+/** Protected routes */
 router.post(
   '/',
   requireAuth,
+  requireAdmin,
   writeLimiter,
   validate(createBlogPostSchema),
   blogController.create
 );
 
-router
-  .route('/:id')
+router.patch(
+  '/:id',
+  requireAuth,
+  requireAdmin,
+  writeLimiter,
+  validate(updateBlogPostSchema),
+  blogController.update
+);
 
-  .get(
-    validate(getBlogPostSchema),
-    blogController.getById
-  )
-
-  .patch(
-    requireAuth,
-    writeLimiter,
-    validate(updateBlogPostSchema),
-    blogController.update
-  )
-
-  .delete(
-    requireAuth,
-    validate(deleteBlogPostSchema),
-    blogController.remove
-  );
+router.delete(
+  '/:id',
+  requireAuth,
+  requireAdmin,
+  writeLimiter,
+  validate(deleteBlogPostSchema),
+  blogController.remove
+);
 
 export default router;
