@@ -1,31 +1,21 @@
-// import rateLimit from 'express-rate-limit';
-
-// export const apiLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000,
-//   max: 100,
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   message: { success: false, message: 'Too many requests, please try again later.' },
-// });
-
-// export const writeLimiter = rateLimit({
-//   windowMs: 60 * 1000,
-//   max: 20,
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   message: { success: false, message: 'Too many write requests, please slow down.' },
-// });
 import rateLimit from 'express-rate-limit';
 
 import { ApiError } from '../utils/ApiError.js';
 
-const createLimiter = (windowMs: number, limit: number, message: string) =>
+const isProd = process.env.NODE_ENV === 'production';
+
+const createLimiter = (
+  windowMs: number,
+  limit: number,
+  message: string,
+  skipSuccessfulRequests = false
+) =>
   rateLimit({
     windowMs,
-    limit, // express-rate-limit v7+ (older versions: `max`)
+    limit,
     standardHeaders: true,
     legacyHeaders: false,
-    // goes through the central error handler => same JSON format everywhere
+    skipSuccessfulRequests,
     handler: (_req, _res, next) => next(ApiError.tooManyRequests(message)),
   });
 
@@ -41,9 +31,17 @@ export const writeLimiter = createLimiter(
   'Too many write requests, please slow down.'
 );
 
-/** Strict limiter against brute force on login / register / refresh. */
+/** Brute-force protection for login / register only. */
 export const authLimiter = createLimiter(
   15 * 60 * 1000,
-  10,
-  'Too many authentication attempts, please try again later.'
+  isProd ? 10 : 200,
+  'Too many authentication attempts, please try again later.',
+  true // সফল login কোটা খরচ করে না
+);
+
+/** Refresh runs on every page load, so it needs a higher limit. */
+export const refreshLimiter = createLimiter(
+  15 * 60 * 1000,
+  isProd ? 100 : 1000,
+  'Too many refresh requests, please try again later.'
 );
