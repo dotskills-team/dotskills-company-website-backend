@@ -25,7 +25,7 @@
 import { Router } from 'express';
 
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { authLimiter } from '../../middlewares/rateLimiter.middleware.js';
+import { authLimiter,refreshLimiter, } from '../../middlewares/rateLimiter.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
 
 import { authController } from './auth.controller.js';
@@ -40,9 +40,18 @@ router.post(
   authController.register
 );
 
+// import {
+//   authLimiter,
+//   refreshLimiter,
+// } from '../../middlewares/rateLimiter.middleware.js';
+
+// ...
+
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 
-router.post('/refresh', authLimiter, authController.refresh);
+// router.post('/refresh', authLimiter, authController.refresh);
+router.post('/refresh', refreshLimiter, authController.refresh);
+
 
 router.post('/logout', authController.logout);
 

@@ -116,5 +116,10 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/posts", blogRoute);
 app.use("/api/v1/media", mediaRoutes);
 app.use("/api/v1/contacts", contactRouter);
-
+app.use((req, res) => {
+  console.warn(`404 → ${req.method} ${req.originalUrl}`);
+  res
+    .status(404)
+    .json({ success: false, message: `Route not found: ${req.originalUrl}` });
+});
 export default app;
